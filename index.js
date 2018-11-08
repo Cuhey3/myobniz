@@ -31,9 +31,13 @@ const { createCanvas, registerFont } = require('canvas');
 registerFont('fonts/sazanami-gothic.ttf', {
   family: "sazanami-gothic"
 });
+var timerId = null;
 
 function connectAction() {
-  obniz.close();
+  if (timerId) {
+    clearInterval(timerId);
+  }
+  obniz.reset();
   obniz = new Obniz(process.env.OBNIZ_ID);
   obniz.onconnect = async function() {
     const canvas = createCanvas(128, 64);
@@ -66,7 +70,7 @@ function connectAction() {
       }
       obniz.display.draw(ctx);
     }
-    setInterval(function() {
+    timerId = setInterval(function() {
       drawFunc();
     }, 1000)
   }
