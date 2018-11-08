@@ -12,7 +12,6 @@ express()
     try {
       connectAction();
       res.send('requested');
-
     }
     catch (e) {
       res.send(e);
@@ -34,12 +33,11 @@ registerFont('fonts/sazanami-gothic.ttf', {
 var timerId = null;
 
 function connectAction() {
-  if (timerId) {
-    clearInterval(timerId);
-  }
-  obniz.reset();
-  obniz = new Obniz(process.env.OBNIZ_ID);
   obniz.onconnect = async function() {
+    if (timerId) {
+      clearInterval(timerId);
+      timerId = null;
+    }
     const canvas = createCanvas(128, 64);
     const ctx = canvas.getContext('2d');
     let cursor = 0;
@@ -70,10 +68,14 @@ function connectAction() {
       }
       obniz.display.draw(ctx);
     }
-    timerId = setInterval(function() {
-      drawFunc();
-    }, 1000)
+    if (!timerId) {
+      timerId = setInterval(function() {
+        drawFunc();
+      }, 1000)
+    }
+    drawFunc();
   }
+
 }
 
 connectAction()
