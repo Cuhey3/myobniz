@@ -6,34 +6,54 @@ const path = require('path');
 const PORT = process.env.PORT || 5000;
 const Obniz = require('obniz');
 
-const obniz = new Obniz("0781-1067");
+const obniz = new Obniz(process.env.OBNIZ_ID);
 const { createCanvas, registerFont } = require('canvas');
 registerFont('fonts/sazanami-gothic.ttf', {
-  family: "myFont"
+  family: "sazanami-gothic"
 });
 
-const timeTable = new TimeTable("錦糸町発 シャトルバス");
+express()
+  .use(express.static(path.join(__dirname, 'public')))
+  .listen(PORT, () => console.log(`Listening on ${ PORT }`));
+
+const timeTables = [
+  new TimeTable("葛西発 シャトルバス"),
+  new TimeTable("葛西発 都バス"),
+  new TimeTable("錦糸町発 シャトルバス")
+];
 obniz.onconnect = async function() {
-  console.log("connected");
   const canvas = createCanvas(128, 64);
   const ctx = canvas.getContext('2d');
+  let cursor = 0;
+  obniz.switch.onchange = function(state) {
+    if (state == 'left') {
+      cursor = (cursor + timeTables.length - 1) % timeTables.length;
+      drawFunc();
+    }
+    else if (state == 'right') {
+      cursor = (cursor + 1) % timeTables.length;
+      drawFunc();
+    }
+  }
 
-  setInterval(function() {
+  function drawFunc() {
+    let timeTable = timeTables[cursor];
     timeTable.check();
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, 128, 64);
     ctx.fillStyle = "white";
-    ctx.font = "14px myFont";
+    ctx.font = "14px sazanami-gothic";
     ctx.fillText("at " + timeTable.name, 0, 14);
     ctx.font = "14px Aviator";
-    ctx.fillText("1st  - " + timeTable.filteredDepartures[0], 0, 30);
-    ctx.fillText("2nd - " + timeTable.filteredDepartures[1], 0, 46);
-    ctx.fillText("remain - " + timeTable.remainExpression, 0, 62);
-
+    ctx.fillText("1st  - " + (timeTable.filteredDepartures[0] || "None"), 0, 30);
+    ctx.fillText("2nd - " + (timeTable.filteredDepartures[1] || "None"), 0, 46);
+    if (timeTable.remainExpression) {
+      ctx.fillText("remain - " + timeTable.remainExpression, 0, 62);
+    }
     obniz.display.draw(ctx);
+  }
+  setInterval(function() {
+    drawFunc();
   }, 1000)
 
 }
-express()
-  .use(express.static(path.join(__dirname, 'public')))
-  .listen(PORT, () => console.log(`Listening on ${ PORT }`));

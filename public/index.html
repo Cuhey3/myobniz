@@ -1,73 +1,7 @@
 <html>
 
-<head>
-  <script src="https://unpkg.com/obniz@1.9.3/obniz.js" crossorigin="anonymous"></script>
-</head>
-
 <body>
-  <script>
-    function format(template, args) {
-      let result = template;
-      args.forEach(function(arg) {
-        result = result.replace("%s", arg);
-      });
-      return result;
-    }
-
-    function DisplayUtil(display, templates) {
-      this.display = display;
-      display.font('Meiryo', 15);
-      this.templates = templates;
-      this.lines = [].concat(templates);
-    }
-
-    DisplayUtil.prototype.setLine = function(index, ...args) {
-      this.lines[index] = format(this.templates[index], args);
-    }
-
-    DisplayUtil.prototype.flush = function() {
-      this.display.clear();
-      var self = this;
-      this.lines.forEach(function(line) {
-        self.display.print(line);
-      });
-    }
-
-    /* globals localStorage, Obniz*/
-    let obniz_id = localStorage.getItem('obniz_id');
-    if (obniz_id) {
-
-    }
-    else {
-      obniz_id = prompt("obniz_id");
-      localStorage.setItem('obniz_id', obniz_id);
-
-    }
-    var obniz = new Obniz(obniz_id);
-
-    obniz.onconnect = async function() {
-      const ctx = obniz.util.createCanvasContext(128, 64);
-
-      /*
-      const util = new DisplayUtil(obniz.display, ["at 葛西-秋葉原バス", "1st  - 20:30", "2nd - 20:50", "remain: %s"]);
-      */
-      var count = 59;
-      setInterval(function() {
-        //util.setLine(3, "10m" + (count--) + "s");
-        //util.flush();
-        ctx.fillStyle = "black";
-        ctx.fillRect(0, 0, 128, 64);
-        ctx.fillStyle = "white";
-        ctx.font = "12px Avenir";
-        ctx.fillText("at 葛西-秋葉原バス", 0, 16);
-        ctx.fillText("1st  - 20:30", 0, 32);
-        ctx.fillText("2nd - 20:50", 0, 48);
-        ctx.fillText("remain - 10m" + (count--) + "s", 0, 64);
-
-        obniz.display.draw(ctx);
-      }, 1000)
-    };
-  </script>
+  foobar
 </body>
 
 </html>
