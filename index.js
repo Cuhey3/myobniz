@@ -2,6 +2,7 @@ process.env.TZ = 'Asia/Tokyo';
 
 const express = require('express');
 const TimeTable = require('./TimeTable.js');
+const CanvasUtil = require('./CanvasUtil.js');
 const path = require('path');
 const PORT = process.env.PORT || 5000;
 const Obniz = require('obniz');
@@ -22,7 +23,8 @@ express()
 const timeTables = [
   new TimeTable("葛西発 シャトルバス"),
   new TimeTable("葛西発 都バス"),
-  new TimeTable("錦糸町発 シャトルバス")
+  new TimeTable("錦糸町発 シャトルバス"),
+  new TimeTable("錦糸町発 都バス")
 ];
 
 let obniz = new Obniz(process.env.OBNIZ_ID);
@@ -31,6 +33,21 @@ registerFont('fonts/sazanami-gothic.ttf', {
   family: "sazanami-gothic"
 });
 var timerId = null;
+const canvas = createCanvas(128, 64);
+const ctx = canvas.getContext('2d');
+
+const canvasUtil = new CanvasUtil(ctx);
+canvasUtil.setResetFunc(function(ctx) {
+  ctx.fillStyle = "black";
+  ctx.fillRect(0, 0, 128, 64);
+  ctx.fillStyle = "white";
+});
+canvasUtil.setLineStyles([
+  { font: "14px sazanami-gothic", text_y: 14 },
+  { font: "14px Aviator", text_y: 30 },
+  { font: "14px Aviator", text_y: 46 },
+  { font: "14px Aviator", text_y: 62 }
+]);
 
 function connectAction() {
   obniz.onconnect = async function() {
@@ -38,8 +55,6 @@ function connectAction() {
       clearInterval(timerId);
       timerId = null;
     }
-    const canvas = createCanvas(128, 64);
-    const ctx = canvas.getContext('2d');
     let cursor = 0;
     obniz.switch.onchange = function(state) {
       if (state == 'left') {
@@ -55,18 +70,13 @@ function connectAction() {
     function drawFunc() {
       let timeTable = timeTables[cursor];
       timeTable.check();
-      ctx.fillStyle = "black";
-      ctx.fillRect(0, 0, 128, 64);
-      ctx.fillStyle = "white";
-      ctx.font = "14px sazanami-gothic";
-      ctx.fillText("at " + timeTable.name, 0, 14);
-      ctx.font = "14px Aviator";
-      ctx.fillText("1st  - " + (timeTable.filteredDepartures[0] || "None"), 0, 30);
-      ctx.fillText("2nd - " + (timeTable.filteredDepartures[1] || "None"), 0, 46);
-      if (timeTable.remainExpression) {
-        ctx.fillText("remain - " + timeTable.remainExpression, 0, 62);
-      }
-      obniz.display.draw(ctx);
+      canvasUtil.update([
+        "at " + timeTable.name,
+        "1st  - " + (timeTable.filteredDepartures[0] || "None"),
+        "2nd - " + (timeTable.filteredDepartures[1] || "None"),
+        timeTable.remainExpression ? "remain - " + timeTable.remainExpression : ""
+      ]);
+      obniz.display.draw(canvasUtil.context());
     }
     if (!timerId) {
       timerId = setInterval(function() {
