@@ -4,43 +4,39 @@ const express = require('express');
 const path = require('path');
 const PORT = process.env.PORT || 5000;
 const Obniz = require('obniz');
-
+const yaml = require('js-yaml');
 const ScreenManager = require('./ScreenManager.js');
 const bodyParser = require('body-parser');
 const querystring = require('querystring');
 const { parseString } = require('xml2js');
 const OnHoldHelper = require('./OnHoldHelper.js');
 const OnContinuousHelper = require('./OnContinuousHelper.js');
+const dsl_runner = require('./dsl.js');
 const screenManager = new ScreenManager('./screeens', 'menu');
 
-const obniz = new Obniz(process.env.OBNIZ_ID);
-
+let obniz = new Obniz(process.env.OBNIZ_ID, { local_connect: false, auto_connect: false });
+obniz.connect();
 const { createCanvas, registerFont } = require('canvas');
+
+dsl_runner.dsl_globals['_functions']['switch'] = async function(dsl_locals, key) {
+  dsl_locals.obniz.switch.onchange(key);
+  setTimeout(function() { obniz.switch.onchange('none'); }, 100);
+  return new Promise(function(resolve) { setTimeout(function() { resolve() }, 1000) });
+};
+
 express()
   .use(express.static(path.join(__dirname, 'public')))
-  .get('/rpa', function(req, res) {
-    if (obniz.switch.onchange) {
-      setTimeout(function() {
-        const rpaCommand = ['right', 'right', 'right', 'right', 'push', 'none', 'none', 'none', 'none', 'none', 'push'];
-        const rpaInterval = setInterval(function() {
-          if (rpaCommand.length > 0) {
-            const command = rpaCommand.shift();
-            obniz.switch.onchange(command);
-            setTimeout(function() { obniz.switch.onchange('none'); }, 100);
-          }
-          else {
-            clearInterval(rpaInterval);
-          }
-        }, 1000);
-      }, 5000);
-    }
-    res.send('start');
-  })
   .use(bodyParser.urlencoded({
     extended: true
   }))
-  .post('/', function(req, res) {
+  .post('/rpa', async function(req, res) {
+    const dsl = yaml.safeLoad(req.body.dsl);
+    await dsl_runner.execute_dsl(dsl, { obniz });
+    res.send('start');
+  })
+  .get('/', function(req, res) {
     try {
+      obniz.connect();
       res.send('requested');
     }
     catch (e) {

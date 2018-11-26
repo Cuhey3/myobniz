@@ -1,0 +1,21 @@
+# 関数を定義する関数define
+- define:
+    # 第一引数は関数名
+    - login
+    # 第二引数は引数リスト
+    - [username, password]
+    # 第三引数は具体的な処理
+    -
+      - when:
+          - $: [check_auth, $: username, $: password]
+          # 成功時処理
+          -
+            - print: 'Login Successful!'
+            - print:
+                $: [format, 'Welcome {}!', $: username]
+          # 失敗時処理
+          - print: 'Login Failed.'
+# ログイン処理（成功）
+- login: [cuhey3, rumiokubo]
+# ログイン処理（失敗）
+- login: [cuhey3, yukaotsubo]

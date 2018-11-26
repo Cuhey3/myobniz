@@ -1,0 +1,13 @@
+- define:
+    - switch
+    - key
+    - do:
+      - get: [console, log]
+      - $: key
+
+- switch: left
+- switch: left
+- switch: left
+- switch: left
+- switch: left
+- switch: left
