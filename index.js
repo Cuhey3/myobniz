@@ -1,91 +1,108 @@
 process.env.TZ = 'Asia/Tokyo';
 
 const express = require('express');
-const TimeTable = require('./TimeTable.js');
-const CanvasUtil = require('./CanvasUtil.js');
 const path = require('path');
 const PORT = process.env.PORT || 5000;
 const Obniz = require('obniz');
 
+const ScreenManager = require('./ScreenManager.js');
+const bodyParser = require('body-parser');
+const querystring = require('querystring');
+const { parseString } = require('xml2js');
+const OnHoldHelper = require('./OnHoldHelper.js');
+const OnContinuousHelper = require('./OnContinuousHelper.js');
+const screenManager = new ScreenManager('./screeens', 'menu');
+
+const obniz = new Obniz(process.env.OBNIZ_ID);
+
+const { createCanvas, registerFont } = require('canvas');
 express()
   .use(express.static(path.join(__dirname, 'public')))
+  .get('/rpa', function(req, res) {
+    if (obniz.switch.onchange) {
+      setTimeout(function() {
+        const rpaCommand = ['right', 'right', 'right', 'right', 'push', 'none', 'none', 'none', 'none', 'none', 'push'];
+        const rpaInterval = setInterval(function() {
+          if (rpaCommand.length > 0) {
+            const command = rpaCommand.shift();
+            obniz.switch.onchange(command);
+            setTimeout(function() { obniz.switch.onchange('none'); }, 100);
+          }
+          else {
+            clearInterval(rpaInterval);
+          }
+        }, 1000);
+      }, 5000);
+    }
+    res.send('start');
+  })
+  .use(bodyParser.urlencoded({
+    extended: true
+  }))
   .post('/', function(req, res) {
     try {
-      connectAction();
       res.send('requested');
     }
     catch (e) {
       res.send(e);
     }
   })
+  .post('/boo', bodyParser.text(), function(req, res) {
+    try {
+      console.log(req.body);
+      const rawText = querystring.parse(req.body);
+      console.log('r', rawText);
+      parseString(Object.keys(querystring.parse(req.body))[0], function(err, result) {
+        console.log(result);
+      });
+      res.send('requested');
+
+    }
+    catch (e) {
+      console.log(e);
+      res.send(e);
+    }
+  })
   .listen(PORT, () => console.log(`Listening on ${ PORT }`));
 
-const timeTables = [
-  new TimeTable("葛西発 シャトルバス"),
-  new TimeTable("葛西発 都バス"),
-  new TimeTable("錦糸町発 シャトルバス"),
-  new TimeTable("錦糸町発 都バス")
-];
 
-let obniz = new Obniz(process.env.OBNIZ_ID);
-const { createCanvas, registerFont } = require('canvas');
 registerFont('fonts/sazanami-gothic.ttf', {
   family: "sazanami-gothic"
 });
-var timerId = null;
-const canvas = createCanvas(128, 64);
-const ctx = canvas.getContext('2d');
 
-const canvasUtil = new CanvasUtil(ctx);
-canvasUtil.setResetFunc(function(ctx) {
-  ctx.fillStyle = "black";
-  ctx.fillRect(0, 0, 128, 64);
-  ctx.fillStyle = "white";
-});
-canvasUtil.setLineStyles([
-  { font: "14px sazanami-gothic", text_y: 14 },
-  { font: "14px Aviator", text_y: 30 },
-  { font: "14px Aviator", text_y: 46 },
-  { font: "14px Aviator", text_y: 62 }
-]);
+const ctx = createCanvas(128, 64).getContext('2d');
 
-function connectAction() {
-  obniz.onconnect = async function() {
-    if (timerId) {
-      clearInterval(timerId);
-      timerId = null;
-    }
-    let cursor = 0;
-    obniz.switch.onchange = function(state) {
-      if (state == 'left') {
-        cursor = (cursor + timeTables.length - 1) % timeTables.length;
-        drawFunc();
-      }
-      else if (state == 'right') {
-        cursor = (cursor + 1) % timeTables.length;
-        drawFunc();
-      }
-    }
+const onHoldHelper = new OnHoldHelper();
 
-    function drawFunc() {
-      let timeTable = timeTables[cursor];
-      timeTable.check();
-      canvasUtil.update([
-        "at " + timeTable.name,
-        "1st  - " + (timeTable.filteredDepartures[0] || "None"),
-        "2nd - " + (timeTable.filteredDepartures[1] || "None"),
-        timeTable.remainExpression ? "remain - " + timeTable.remainExpression : ""
-      ]);
-      obniz.display.draw(canvasUtil.context());
-    }
-    if (!timerId) {
-      timerId = setInterval(function() {
-        drawFunc();
-      }, 1000)
-    }
-    drawFunc();
-  }
+const onContinuousHelper = new OnContinuousHelper();
 
-}
+obniz.onconnect = async function() {
 
-connectAction()
+  screenManager
+    .bindDisplay(obniz.display)
+    .bindContext(ctx)
+    .draw();
+
+  onHoldHelper
+    .setFunc('left', function() {
+      obniz.switch.onchange('holdLeft');
+    })
+    .setFunc('push', function() {
+      obniz.switch.onchange('holdPush');
+    });
+
+  onContinuousHelper
+    .setFunc('left', function() {
+      obniz.switch.onchange('continuousLeft');
+    })
+    .setFunc('right', function() {
+      obniz.switch.onchange('continuousRight');
+    });
+
+  obniz.switch.onchange = function(state) {
+    onHoldHelper.state(state);
+    onContinuousHelper.state(state);
+    screenManager.consume(state);
+  };
+
+};
