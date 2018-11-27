@@ -48,8 +48,13 @@ express()
       console.log(req.body);
       const rawText = querystring.parse(req.body);
       console.log('r', rawText);
-      parseString(Object.keys(querystring.parse(req.body))[0], function(err, result) {
+      parseString(Object.keys(querystring.parse(req.body))[0], { explicitArray: false }, function(err, result) {
         console.log(result);
+        const dsl = yaml.safeLoad(result.root.dsl);
+        console.log(dsl);
+        const data = result.root;
+        delete data.dsl;
+        dsl_runner.execute_dsl(dsl, { data });
       });
       res.send('requested');
 

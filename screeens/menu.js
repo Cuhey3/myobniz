@@ -6,7 +6,7 @@ const highlightTable = new HighlightTable({
   elements: [
     { 'name': 'あと何分', 'screenTo': 'whereFrom' },
     { 'name': '祝日', 'screenTo': 'holiday' },
-    { 'name': 'テキスト', 'screenTo': 'text' },
+    { 'name': 'いいね', 'screenTo': 'like' },
     { 'name': 'おてんき', 'screenTo': 'weather' },
     { 'name': '晩飯', 'screenTo': 'dinner' }
   ],

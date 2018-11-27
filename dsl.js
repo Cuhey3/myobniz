@@ -1,5 +1,28 @@
-// dsl_localsを使用しない関数のためのデコレータ
+const MongoService = require('./MongoService.js');
+const date = require('date-and-time');
 
+async function mongo_insert(dsl_locals, collectionName) {
+  const client = await MongoService.getClient();
+  await MongoService.getCollection(client, collectionName).insertOne(dsl_locals.data);
+  client.close();
+  MongoService.loadCollection(collectionName);
+}
+
+function twitterDateToLong(dsl_locals, field) {
+  const twitterDate = dsl_locals.data[field];
+  let longTime = date.parse(twitterDate.slice(0, -2), "MMMM D, YYYY at HH:mm");
+  if (longTime) {
+    longTime = longTime.getTime();
+  }
+  if (longTime && twitterDate.substr(-2) === 'PM') {
+    longTime += 12 * 60 * 60 * 1000;
+  }
+  if (longTime) {
+    dsl_locals.data[field] = longTime;
+  }
+}
+
+// dsl_localsを使用しない関数のためのデコレータ
 function ignore_locals(f) {
   return function(dsl_locals, ...args) {
     return f.apply(this, args);
@@ -23,6 +46,20 @@ function _get(dsl_locals, var_name) {
     else {
       return dsl_globals[var_name] || dsl_globals['_functions'][var_name];
     }
+  }
+}
+
+function expectsDate(dsl_locals, field) {
+  const str = dsl_locals.data[field];
+  console.log(str, field, JSON.stringify(dsl_locals));
+  return [/本日/, /曜/, /\d{1,2}月\d{1,2}日/, /\d{1,2}\/\d{1,2}/].some(function(regex) {
+    return regex.test(str);
+  });
+}
+
+async function _filter(dsl_locals, predicate, filtered_dsl) {
+  if (predicate) {
+    await execute_dsl(filtered_dsl, dsl_locals);
   }
 }
 
@@ -82,12 +119,12 @@ function check_auth(dsl_locals, username, password) {
 
 // 条件分岐関数
 // when関数が呼ばれた時点で、predicateは真偽値に変換されている。
-function when(dsl_locals, predicate, true_dsl, false_dsl) {
+async function when(dsl_locals, predicate, true_dsl, false_dsl) {
   if (predicate) {
-    execute_dsl(true_dsl, dsl_locals);
+    await execute_dsl(true_dsl, dsl_locals);
   }
   else {
-    execute_dsl(false_dsl, dsl_locals);
+    await execute_dsl(false_dsl, dsl_locals);
   }
 }
 
@@ -122,7 +159,11 @@ const dsl_globals = {
     'check_auth': check_auth,
     'when': when,
     'define': define,
-    wait
+    wait,
+    filter: _filter,
+    mongo_insert,
+    twitterDateToLong,
+    expectsDate
   }
 };
 //引数を評価する関数
@@ -150,6 +191,7 @@ function evaluate_args(dsl_locals, args) {
 
 // dsl_localsまたはdsl_globalsから関数を見つける
 function find_func_in_scope(dsl_locals, func_name) {
+  console.log("find_func_in_scope", func_name);
   return dsl_globals['_functions'][func_name] || ((dsl_locals['_functions'] || {})[func_name]);
 }
 
