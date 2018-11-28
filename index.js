@@ -50,7 +50,7 @@ express()
       console.log('r', rawText);
       parseString(Object.keys(querystring.parse(req.body))[0], { explicitArray: false }, function(err, result) {
         console.log(result);
-        const dsl = yaml.safeLoad(result.root.dslOnReceive);
+        const dsl = yaml.safeLoad(result.root.dslOnProduce);
         console.log(dsl);
         const data = result.root;
         delete data.dsl;

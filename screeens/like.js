@@ -7,7 +7,7 @@ const MongoService = require('../MongoService.js');
 
 likeScreen.setVariables({
   modal: false,
-  modalCursor: true,
+  modalCursor: 2,
   cursor: 0
 });
 
@@ -29,6 +29,7 @@ const layers = [{
     }
     else if (state == 'push') {
       objToTop(layers, 'modalLayer');
+      val().modalCursor = 2;
       return true;
     }
     else {
@@ -76,15 +77,34 @@ const layers = [{
 }, {
   name: 'modalLayer',
   consume: function(state) {
-    if (state == "right" || state == "left") {
-      val().modalCursor = !val().modalCursor;
+    if (state == "right") {
+      val().modalCursor = (val().modalCursor + 1) % 3;
+      return true;
+    }
+    else if (state === 'left') {
+      val().modalCursor = (val().modalCursor + 2) % 3;
       return true;
     }
     else if (state == "push") {
-      if (val('modalCursor') && MongoService.coldCollection("liked_tweets").length > 0) {
+      if (val('modalCursor') !== 2 && MongoService.coldCollection("liked_tweets").length > 0) {
         const toDeleteRecord = MongoService.coldCollection("liked_tweets").splice(val('cursor'), 1)[0];
         if (MongoService.coldCollection("liked_tweets").length === val('cursor')) {
           val().cursor = 0;
+        }
+        if (val('modalCursor') === 0) {
+          const request = require('request-promise');
+          const value1Date = new Date(toDeleteRecord.extractDates[0]);
+          request({
+            method: 'POST',
+            uri: 'https://maker.ifttt.com/trigger/google_calendar/with/key/' + process.env.IFTTT_KEY,
+            body: {
+              value1: dateAndTime.format(value1Date, "YYYY/MM/DD"),
+              value2: toDeleteRecord.text,
+              value3: toDeleteRecord.linkToTweet,
+            },
+            json: true
+          });
+
         }
         MongoService.deleteRecord('liked_tweets', toDeleteRecord);
       }
@@ -100,24 +120,42 @@ const layers = [{
     ctx.strokeStyle = "white";
     ctx.lineWidth = 1;
     ctx.fillStyle = "black";
-    ctx.fillRect(18, 10, 88, 42);
-    ctx.strokeRect(18, 10, 88, 42);
+    ctx.fillRect(12, 10, 100, 42);
+    ctx.strokeRect(12, 10, 100, 42);
     ctx.fillStyle = "white";
-    ctx.fillText("Remove?", 30, 27);
-    if (val('modalCursor')) {
-      ctx.fillStyle = "white";
-      ctx.fillRect(35, 32, 24, 15);
-      ctx.fillStyle = "black";
-      ctx.fillText("Yes", 38, 44);
-      ctx.fillStyle = "white";
-      ctx.fillText("No", 68, 44);
-    }
-    else {
-      ctx.fillStyle = "white";
-      ctx.fillText("Yes", 38, 44);
-      ctx.fillRect(64, 32, 24, 15);
-      ctx.fillStyle = "black";
-      ctx.fillText("No", 68, 44);
+    ctx.fillText("to Calendar?", 24, 27);
+    switch (val('modalCursor')) {
+      case 0:
+        ctx.fillStyle = "white";
+        ctx.fillRect(17, 32, 24, 15);
+        ctx.fillStyle = "black";
+        ctx.fillText("Yes", 20, 44);
+        ctx.fillStyle = "white";
+        ctx.fillText("No", 44, 44);
+        ctx.fillStyle = "white";
+        ctx.fillText("Cancel", 66, 44);
+        break;
+      case 1:
+        ctx.fillStyle = "white";
+        ctx.fillText("Yes", 20, 44);
+        ctx.fillStyle = "white";
+        ctx.fillRect(42, 32, 21, 15);
+        ctx.fillStyle = "black";
+        ctx.fillText("No", 44, 44);
+        ctx.fillStyle = "white";
+        ctx.fillText("Cancel", 66, 44);
+        break;
+      case 2:
+        ctx.fillStyle = "white";
+        ctx.fillText("Yes", 20, 44);
+        ctx.fillStyle = "white";
+        ctx.fillText("No", 44, 44);
+        ctx.fillStyle = "white";
+        ctx.fillRect(65, 32, 44, 15);
+        ctx.fillStyle = "black";
+        ctx.fillText("Cancel", 66, 44);
+        break;
+      default:
     }
   }
 }];
