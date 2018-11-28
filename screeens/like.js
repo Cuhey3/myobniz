@@ -38,7 +38,7 @@ const layers = [{
   },
   draw: function(ctx) {
     const tweet = MongoService.coldCollection('liked_tweets')[val('cursor')] || {};
-    const dateString = dateAndTime.format(new Date((tweet.extractDates || [])[0]), 'MM/DD') || "";
+    const dateString = tweet.extractDates ? dateAndTime.format(new Date(tweet.extractDates[0]), 'MM/DD') : "";
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, 128, 64);
     ctx.fillStyle = "white";
