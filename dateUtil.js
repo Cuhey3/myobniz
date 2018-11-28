@@ -1,6 +1,6 @@
-const yearDigitStr = ('(2018|2019|2020)');
-const monthDigitStr = '(1[0-2]|0?\\d)';
-const dayDigitStr = '([12]\\d|3[01]|0?\\d)';
+const yearDigitStr = ('(2018|2019|2020|２０１８|２０１９|２０２０)');
+const monthDigitStr = '([1１][0-2０-２]|[0０]?[\\d０-９])';
+const dayDigitStr = '([1１2２][\\d０-９]|[3３][0０1１]|[0０]?[\\d０-９])';
 
 function toFutureDate(date) {
   if (date.getTime() > new Date().getTime()) {
