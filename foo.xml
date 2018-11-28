@@ -4,29 +4,14 @@
   <firstLinkUrl>{{FirstLinkUrl}}</firstLinkUrl>
   <createdAt>{{CreatedAt}}</createdAt>
   <text><![CDATA[{{Text}}]]></text>
-  <dslOnRecieve>
+  <dslOnReceive>
     <![CDATA[
 - filter:
   - expectsDate: text
   - 
     - twitterDateToLong: createdAt
+    - extractDates: text
     - mongo_insert: liked_tweets
-]]>
-    </dslOnReceive>
-    <dslOnConsume>
-      <![CDATA[
-
-]]>
-    </dslOnConsume>
-    <dslOnSend>
-      <![CDATA[
-- convert: twitterToCalendar
-- filter:
-  - $:
-    - iftttWebhook
-    - gmail_calendar
-  -
-    - mongo_delete:
-]]>
-    </dslOnSend>
+    ]]>
+  </dslOnReceive>
 </root>

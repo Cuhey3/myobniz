@@ -1,5 +1,6 @@
 const MongoService = require('./MongoService.js');
 const date = require('date-and-time');
+const dateUtil = require('./dateUtil.js');
 
 async function mongo_insert(dsl_locals, collectionName) {
   const client = await MongoService.getClient();
@@ -55,6 +56,11 @@ function expectsDate(dsl_locals, field) {
   return [/本日/, /曜/, /\d{1,2}月\d{1,2}日/, /\d{1,2}\/\d{1,2}/].some(function(regex) {
     return regex.test(str);
   });
+}
+
+function extractDates(dsl_locals, from, to = 'extractDates') {
+  const result = dateUtil.extractDates(dsl_locals.data[from] || '');
+  dsl_locals.data[to] = result;
 }
 
 async function _filter(dsl_locals, predicate, filtered_dsl) {
@@ -163,7 +169,8 @@ const dsl_globals = {
     filter: _filter,
     mongo_insert,
     twitterDateToLong,
-    expectsDate
+    expectsDate,
+    extractDates
   }
 };
 //引数を評価する関数

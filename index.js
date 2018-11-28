@@ -30,7 +30,7 @@ express()
     extended: true
   }))
   .post('/rpa', async function(req, res) {
-    const dsl = yaml.safeLoad(req.body.dsl);
+    const dsl = yaml.safeLoad(req.body.dslOnRecieve);
     await dsl_runner.execute_dsl(dsl, { obniz });
     res.send('start');
   })
@@ -50,7 +50,7 @@ express()
       console.log('r', rawText);
       parseString(Object.keys(querystring.parse(req.body))[0], { explicitArray: false }, function(err, result) {
         console.log(result);
-        const dsl = yaml.safeLoad(result.root.dsl);
+        const dsl = yaml.safeLoad(result.root.dslOnReceive);
         console.log(dsl);
         const data = result.root;
         delete data.dsl;

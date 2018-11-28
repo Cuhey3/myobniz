@@ -16,9 +16,8 @@ const collections = {};
 
 async function loadCollection(collectionName) {
   const client = await getClient();
-  const allData = await getCollection(client, 'liked_tweets').find({}).toArray();
+  const allData = await getCollection(client, collectionName).find({}).toArray();
   collections[collectionName] = allData;
-  console.log("foobar");
   client.close();
 }
 
@@ -26,6 +25,15 @@ function coldCollection(collectionName) {
   return collections[collectionName] || [];
 }
 
+async function deleteRecord(collectionName, data) {
+  const client = await getClient();
+  await getCollection(client, collectionName).deleteOne({ _id: data._id });
+  console.log(JSON.stringify({ _id: data._id }));
+  const allData = await getCollection(client, collectionName).find({}).toArray();
+  collections[collectionName] = allData;
+  client.close();
+}
+
 loadCollection('liked_tweets');
 
-module.exports = { getClient, getCollection, loadCollection, coldCollection };
+module.exports = { getClient, getCollection, loadCollection, coldCollection, deleteRecord };
