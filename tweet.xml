@@ -7,7 +7,7 @@
   <dslOnProduce>
     <![CDATA[
 - filter:
-  - expectsDate: text
+  - $expectsDate: text
   - 
     - twitterDateToLong: createdAt
     - extractDates: text
@@ -17,11 +17,17 @@
   <dslOnConsume>
     <![CDATA[
 - filter:
-  - $: entry
+  - $: sendFlag
   - 
-    - convert: dateTweetToGoogleCalendar
-    - ifttt: google_calendar
-- mongo_delete: []
+    - convertForWebhook:
+      - $dateFormat:
+        - $top:
+            $: extractDates
+        - YYYY/MM/DD
+      - $: text
+      - $: linkToTweet
+    - log: gmail_to_calendar_end_data
+    - sendToWebhook: google_calendar
 ]]>
   </dslOnConsume>
 </root>

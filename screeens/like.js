@@ -2,7 +2,8 @@ const Screen = require('../Screen.js');
 const { circularAdd, objToTop } = require('../appUtil.js');
 const likeScreen = new Screen('like');
 const dateAndTime = require('date-and-time');
-
+const { execute_dsl } = require('../dsl.js');
+const yaml = require('js-yaml');
 const MongoService = require('../MongoService.js');
 
 likeScreen.setVariables({
@@ -88,24 +89,12 @@ const layers = [{
     else if (state == "push") {
       if (val('modalCursor') !== 2 && MongoService.coldCollection("liked_tweets").length > 0) {
         const toDeleteRecord = MongoService.coldCollection("liked_tweets").splice(val('cursor'), 1)[0];
+        toDeleteRecord.sendFlag = val('modalCursor') === 0;
         if (MongoService.coldCollection("liked_tweets").length === val('cursor')) {
           val().cursor = 0;
         }
-        if (val('modalCursor') === 0) {
-          const request = require('request-promise');
-          const value1Date = new Date(toDeleteRecord.extractDates[0]);
-          request({
-            method: 'POST',
-            uri: 'https://maker.ifttt.com/trigger/google_calendar/with/key/' + process.env.IFTTT_KEY,
-            body: {
-              value1: dateAndTime.format(value1Date, "YYYY/MM/DD"),
-              value2: toDeleteRecord.text,
-              value3: toDeleteRecord.linkToTweet,
-            },
-            json: true
-          });
-
-        }
+        const dsl = toDeleteRecord.dslOnConsume;
+        execute_dsl(yaml.safeLoad(dsl), toDeleteRecord);
         MongoService.deleteRecord('liked_tweets', toDeleteRecord);
       }
       objToTop(layers, 'likeLayer');

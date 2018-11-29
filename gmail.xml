@@ -1,0 +1,29 @@
+<root>
+  <subject>
+    <![CDATA[{{Subject}}]]>
+  </subject>
+  <bodyText>
+    <![CDATA[{{BodyPlain}}]]>
+  </bodyText>
+  <dslOnProduce>
+    <![CDATA[
+- log: gmail_to_calendar_start_data
+- extractDates: subject
+- extractDates: bodyText
+- filter:
+  - $not:
+      $isEmpty:
+        $: extractDates
+  -
+    - convertForWebhook:
+      - $dateFormat:
+        - $top:
+            $: extractDates
+        - YYYY/MM/DD
+      - $: subject
+      - $: bodyText
+    - log: gmail_to_calendar_end_data
+    - sendToWebhook: google_calendar
+]]>
+  </dslOnProduce>
+</root>
