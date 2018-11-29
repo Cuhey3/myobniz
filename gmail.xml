@@ -15,15 +15,15 @@
       $isEmpty:
         $: extractDates
   -
-    - convertForWebhook:
+    - webhook:
+      - google_calendar
       - $dateFormat:
         - $top:
             $: extractDates
         - YYYY/MM/DD
       - $: subject
       - $: bodyText
-    - log: gmail_to_calendar_end_data
-    - sendToWebhook: google_calendar
+
 ]]>
   </dslOnProduce>
 </root>

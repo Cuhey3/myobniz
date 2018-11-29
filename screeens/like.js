@@ -95,7 +95,6 @@ const layers = [{
         }
         const dsl = toDeleteRecord.dslOnConsume;
         execute_dsl(yaml.safeLoad(dsl), toDeleteRecord);
-        MongoService.deleteRecord('liked_tweets', toDeleteRecord);
       }
       objToTop(layers, 'likeLayer');
       return true;

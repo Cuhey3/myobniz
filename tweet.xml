@@ -19,15 +19,15 @@
 - filter:
   - $: sendFlag
   - 
-    - convertForWebhook:
+    - webhook: 
+      - google_calendar
       - $dateFormat:
         - $top:
             $: extractDates
         - YYYY/MM/DD
       - $: text
       - $: linkToTweet
-    - log: gmail_to_calendar_end_data
-    - sendToWebhook: google_calendar
+- mongo_delete: liked_tweets
 ]]>
   </dslOnConsume>
 </root>

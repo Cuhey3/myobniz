@@ -10,22 +10,16 @@ async function mongo_insert(dsl_locals, collectionName) {
   MongoService.loadCollection(collectionName);
 }
 
+async function mongo_delete(dsl_locals, collectionName) {
+  MongoService.deleteRecord(collectionName, dsl_locals);
+}
+
 function dateFormat(dsl_locals, longTime, format) {
   console.log('dateFormat', JSON.stringify(dsl_locals), longTime, format);
   return date.format(new Date(longTime), format);
 }
 
-function convertForWebhook(dsl_locals, value1, value2, value3) {
-  Object.keys(dsl_locals).forEach(function(key) {
-    delete dsl_locals[key];
-  });
-  dsl_locals['value1'] = value1;
-  dsl_locals['value2'] = value2;
-  dsl_locals['value3'] = value3;
-}
-
-async function sendToWebhook(dsl_locals, trigger_name) {
-  const { value1, value2, value3 } = dsl_locals;
+async function webhook(dsl_locals, trigger_name, value1, value2, value3) {
   console.log('webhoooo', value1, value2, value3);
   await request({
     method: 'POST',
@@ -238,13 +232,13 @@ const dsl_globals = {
     wait,
     filter: _filter,
     mongo_insert,
+    mongo_delete,
     twitterDateToLong,
     expectsDate,
     extractDates,
     cleanup,
     dateFormat,
-    sendToWebhook,
-    convertForWebhook,
+    webhook,
     isEmpty
   }
 };
