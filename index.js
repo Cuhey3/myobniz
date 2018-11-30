@@ -11,18 +11,18 @@ const querystring = require('querystring');
 const { parseString } = require('xml2js');
 const OnHoldHelper = require('./OnHoldHelper.js');
 const OnContinuousHelper = require('./OnContinuousHelper.js');
-const dsl_runner = require('./dsl.js');
+const dsl_runner = require('./dsl2.js');
 const screenManager = new ScreenManager('./screeens', 'menu');
 
 let obniz = new Obniz(process.env.OBNIZ_ID, { local_connect: false, auto_connect: false });
 obniz.connect();
 const { createCanvas, registerFont } = require('canvas');
 
-dsl_runner.dsl_globals['_functions']['switch'] = async function(dsl_locals, key) {
+/*dsl_runner.dsl_globals['_functions']['switch'] = async function(dsl_locals, key) {
   dsl_locals.obniz.switch.onchange(key);
   setTimeout(function() { obniz.switch.onchange('none'); }, 100);
   return new Promise(function(resolve) { setTimeout(function() { resolve() }, 1000) });
-};
+};*/
 
 express()
   .use(express.static(path.join(__dirname, 'public')))

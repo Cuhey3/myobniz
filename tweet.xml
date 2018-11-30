@@ -6,27 +6,29 @@
   <text><![CDATA[{{Text}}]]></text>
   <dslOnProduce>
     <![CDATA[
+- push:
+  - extracted
+  - extractDates: $text
 - filter:
-  - $expectsDate: text
+  - not:
+      isEmpty: $extracted
   - 
-    - twitterDateToLong: createdAt
-    - extractDates: text
     - mongo_insert: liked_tweets
 ]]>
   </dslOnProduce>
   <dslOnConsume>
     <![CDATA[
 - filter:
-  - $: sendFlag
+  - $sendFlag
   - 
     - webhook: 
       - google_calendar
-      - $dateFormat:
-        - $top:
-            $: extractDates
-        - YYYY/MM/DD
-      - $: text
-      - $: linkToTweet
+      -
+        - dateFormat:
+          - $extractDates[0]
+          - YYYY/MM/DD
+        - $text
+        - $linkToTweet
 - mongo_delete: liked_tweets
 ]]>
   </dslOnConsume>

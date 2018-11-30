@@ -1,4 +1,4 @@
-const yearDigitStr = ('(2018|2019|2020|２０１８|２０１９|２０２０)');
+const yearDigitStr = ('([2２][0０][1１][\\d０-９])');
 const monthDigitStr = '([1１][0-2０-２]|[0０]?[\\d０-９])';
 const dayDigitStr = '([1１2２][\\d０-９]|[3３][0０1１]|[0０]?[\\d０-９])';
 
@@ -39,11 +39,11 @@ const datePatterns = [{
 
 function extractDates(str) {
   const result = [];
-
   let obj = datePatterns.find(function(obj) {
     return obj.pattern.test(str);
   });
   while (obj) {
+    console.log(obj.name);
     result.push(obj.extract(obj.pattern.exec(str)).getTime());
     str = str.replace(obj.pattern, '');
     obj = datePatterns.find(function(obj) {

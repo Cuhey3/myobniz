@@ -26,14 +26,19 @@ function coldCollection(collectionName) {
 }
 
 async function deleteRecord(collectionName, data) {
+  console.log(data._id, collectionName);
   const client = await getClient();
-  await getCollection(client, collectionName).deleteOne({ _id: data._id });
-  console.log(JSON.stringify({ _id: data._id }));
+  await getCollection(client, collectionName).deleteOne({ _id: data._id }, function(err, obj) {
+    if (err) throw err;
+    console.log("1 document deleted", JSON.stringify(obj));
+  });
   const allData = await getCollection(client, collectionName).find({}).toArray();
   collections[collectionName] = allData;
+  console.log(JSON.stringify(allData));
   client.close();
 }
 
 loadCollection('liked_tweets');
+loadCollection('foobar');
 
 module.exports = { getClient, getCollection, loadCollection, coldCollection, deleteRecord };

@@ -7,23 +7,23 @@
   </bodyText>
   <dslOnProduce>
     <![CDATA[
-- log: gmail_to_calendar_start_data
-- extractDates: subject
-- extractDates: bodyText
+- push:
+    - extracted
+    - extractDates:
+      - $subject
+      - $bodyText
 - filter:
-  - $not:
-      $isEmpty:
-        $: extractDates
+  - not:
+      isEmpty: $extracted
   -
     - webhook:
       - google_calendar
-      - $dateFormat:
-        - $top:
-            $: extractDates
-        - YYYY/MM/DD
-      - $: subject
-      - $: bodyText
-
+      -
+        - dateFormat:
+          - $extracted[0]
+          - YYYY/MM/DD
+        - $subject
+        - $bodyText
 ]]>
   </dslOnProduce>
 </root>
